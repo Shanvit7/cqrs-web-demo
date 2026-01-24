@@ -4,6 +4,7 @@ import { createRouter, createWebHistory,type RouteRecordRaw } from 'vue-router';
 import DefaultLayout from '@/layouts/default.vue';
 // PAGES
 import Landing from '@/views/landing.vue';
+import Products from '@/views/products.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -15,6 +16,11 @@ const routes: Array<RouteRecordRaw> = [
         path: '',
         name: 'Landing',
         component: Landing,
+      },
+      {
+        path: 'products',
+        name: 'Products',
+        component: Products,
       },
     ],
   },

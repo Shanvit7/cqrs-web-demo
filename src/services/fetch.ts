@@ -148,6 +148,22 @@ export class ApiService {
       ...options,
       method: 'PUT',
       body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    })
+  }
+
+  async patch<T>(endpoint: string, body: unknown, options?: ApiOptions) {
+    return this.fetchData<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
     })
   }
 

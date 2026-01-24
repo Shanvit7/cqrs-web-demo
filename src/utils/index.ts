@@ -8,3 +8,9 @@ export const formatDate = (date: Date): string => {
 export const cn = (...classes: ClassValue[]): string => {
   return twMerge(clsx(classes));
 };
+
+export const generateCustomerId = (): string => {
+  const randomString = Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
+  return `customer-${randomString}`;
+};

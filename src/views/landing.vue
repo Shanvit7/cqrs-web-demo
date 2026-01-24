@@ -1,5 +1,12 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import Button from '@/components/ui/button.vue'
+
+const router = useRouter()
+
+const handleGetStarted = () => {
+  router.push('/products')
+}
 </script>
 
 <template>
@@ -8,13 +15,13 @@ import Button from '@/components/ui/button.vue'
       <!-- Hero Section -->
       <div class="mb-16 text-center">
         <h1 class="mb-6 text-5xl font-light text-black tracking-tight md:text-6xl">
-          Go Balancer Demo
+          CQRS OMS Demo
         </h1>
         <p class="mx-auto mb-8 max-w-3xl text-lg leading-relaxed text-gray-700">
-          This project demonstrates how a load balancer distributes concurrent HTTP requests across multiple backend servers, handles failures, and maintains availability — using real network hops and concurrency primitives in Go.
+          A demonstration of a CQRS (Command Query Responsibility Segregation) Order Management System built with Bun, Hono, PostgreSQL, and Redis. Explore products, add them to your cart, and experience CQRS + Event Sourcing architecture in action.
         </p>
-        <Button class="px-8 py-3 text-base md:text-lg">
-          Generate Load
+        <Button class="px-8 py-3 text-base md:text-lg" @click="handleGetStarted">
+          Get Started
         </Button>
       </div>
 
@@ -26,14 +33,14 @@ import Button from '@/components/ui/button.vue'
             What You're Looking At
           </h2>
           <p class="mb-4 text-base leading-relaxed text-gray-700">
-            This interface visualizes real routing decisions made by the load balancer in real time.
+            This frontend demonstrates how to interact with a CQRS + Event Sourcing backend architecture. All order operations are separated into commands (writes) and queries (reads).
           </p>
           <ul class="ml-6 list-disc space-y-2 text-base leading-relaxed text-gray-700">
-            <li>Each request is routed to exactly one backend</li>
-            <li>Backend selection is automatic (round-robin)</li>
-            <li>Traffic distribution emerges under concurrency</li>
-            <li>Failed backends are automatically skipped</li>
-            <li>No routing decisions are controlled by the UI.</li>
+            <li><strong>Commands</strong>: Create orders and update status (write to PostgreSQL event store)</li>
+            <li><strong>Queries</strong>: Fetch orders from optimized Redis read models</li>
+            <li><strong>Event Sourcing</strong>: All state changes stored as events in PostgreSQL</li>
+            <li><strong>Read Models</strong>: Redis projections updated asynchronously from events</li>
+            <li><strong>Separation</strong>: Write and read databases are completely independent</li>
           </ul>
         </section>
 
@@ -43,13 +50,14 @@ import Button from '@/components/ui/button.vue'
             How the Demo Works
           </h2>
           <ol class="ml-6 list-decimal space-y-2 text-base leading-relaxed text-gray-700">
-            <li>The browser sends multiple concurrent requests to the load balancer.</li>
-            <li>The load balancer selects a healthy backend for each request.</li>
-            <li>Requests are forwarded over HTTP to independent backend servers.</li>
-            <li>Routing events are streamed back and visualized here.</li>
+            <li><strong>Explore Products</strong>: Browse products from DummyJSON API and add them to your cart</li>
+            <li><strong>Add to Cart</strong>: Products are stored in Zustand store (client-side cart management)</li>
+            <li><strong>Create Order</strong>: When ready, create an order → Frontend dispatches CreateOrderCommand → Events saved to PostgreSQL → Projections update Redis</li>
+            <li><strong>View Orders</strong>: Frontend executes GetOrderQuery → Reads from Redis read model</li>
+            <li><strong>Update Status</strong>: Frontend dispatches UpdateOrderStatusCommand → New event appended → Redis updated</li>
           </ol>
           <p class="mt-4 text-base leading-relaxed text-gray-700">
-            This mirrors how real-world load balancers behave under traffic.
+            This architecture provides 10-100x faster reads than traditional approaches while maintaining complete audit trails.
           </p>
         </section>
 
@@ -59,24 +67,26 @@ import Button from '@/components/ui/button.vue'
             What This Demonstrates
           </h2>
           <ul class="ml-6 list-disc space-y-2 text-base leading-relaxed text-gray-700">
-            <li>Concurrency handling in Go</li>
-            <li>Request distribution (round robin)</li>
-            <li>Fault tolerance via health checks</li>
-            <li>Separation of concerns between client, balancer, and backends</li>
-            <li>Observability without influencing routing logic</li>
+            <li><strong>CQRS Pattern</strong>: Separation of command and query responsibilities</li>
+            <li><strong>Event Sourcing</strong>: Complete history of all domain events</li>
+            <li><strong>Read Model Projections</strong>: Optimized views for fast queries</li>
+            <li><strong>Scalability</strong>: Read and write sides can scale independently</li>
+            <li><strong>Eventual Consistency</strong>: Read models updated asynchronously</li>
+            <li><strong>Event Replay</strong>: Can rebuild read models from event store</li>
           </ul>
         </section>
 
-        <!-- What This Is Not -->
+        <!-- Architecture Benefits -->
         <section>
           <h2 class="mb-4 text-2xl font-semibold text-black md:text-3xl">
-            What This Is Not
+            Architecture Benefits
           </h2>
           <ul class="ml-6 list-disc space-y-2 text-base leading-relaxed text-gray-700">
-            <li>This is not a performance benchmark</li>
-            <li>This is not a production-grade replacement for Nginx/Envoy</li>
-            <li>This UI does not influence routing decisions</li>
-            <li>The goal is correctness, clarity, and systems understanding.</li>
+            <li><strong>Performance</strong>: Redis provides sub-millisecond read performance</li>
+            <li><strong>Durability</strong>: PostgreSQL ensures events are never lost</li>
+            <li><strong>Flexibility</strong>: Add new read models without changing write model</li>
+            <li><strong>Audit Trail</strong>: Complete history in PostgreSQL event store</li>
+            <li><strong>Real-World</strong>: Matches production architecture patterns</li>
           </ul>
         </section>
 
@@ -86,10 +96,10 @@ import Button from '@/components/ui/button.vue'
             Try It
           </h2>
           <p class="text-base leading-relaxed text-gray-700">
-            Click "Generate Load" to send concurrent requests and observe how traffic is distributed across backends in real time.
+            Click "Get Started" to explore products from DummyJSON, add them to your cart, and experience the CQRS architecture. Products are fetched from an external API, while orders are managed through the CQRS backend.
           </p>
           <p class="mt-4 text-base leading-relaxed text-gray-700">
-            You can also simulate failure by stopping a backend and watching traffic reroute automatically.
+            The backend demonstrates CQRS patterns: commands generate events stored in PostgreSQL, while queries read from optimized Redis read models updated by projections.
           </p>
         </section>
       </div>
