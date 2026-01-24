@@ -2,8 +2,8 @@
 import { ApiService } from '@/services/fetch';
 // TYPES
 import type { ProductsResponse, Product } from '@/types/schema';
-
-const DUMMYJSON_BASE_URL = 'https://dummyjson.com'
+// CONSTANTS
+import { DUMMYJSON_BASE_URL } from '@/utils/constants';
 
 const apiService = new ApiService(DUMMYJSON_BASE_URL)
 
