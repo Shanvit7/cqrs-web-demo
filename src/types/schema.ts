@@ -117,3 +117,59 @@ export interface Category {
   url: string
 }
 
+// Event Types (CQRS Event Store)
+export type EventType = 
+  | 'OrderCreated' 
+  | 'OrderStatusUpdated' 
+  | 'OrderCancelled'
+
+// Actual API response structure
+export interface CQRSEvent {
+  eventId: string
+  payload: {
+    items?: Array<{
+      productId: string
+      quantity: number
+      price: number
+    }>
+    customerId?: string
+    totalAmount?: number
+    status?: string
+    orderId?: string
+    [key: string]: unknown
+  }
+  metadata?: {
+    userId?: string
+    timestamp?: string
+    version?: number
+    orderId?: string
+    eventType?: EventType
+    occurredAt?: string
+    [key: string]: unknown
+  } | null
+  // Optional fields that may be present in some responses
+  aggregateId?: string
+  eventType?: EventType
+  occurredAt?: string
+  streamId?: string
+  eventNumber?: number
+}
+
+export interface EventsResponse {
+  message: string
+  events: CQRSEvent[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+  }
+}
+
+export interface ListEventsParams {
+  page?: number
+  limit?: number
+  eventType?: EventType
+  aggregateId?: string
+  fromDate?: string
+  toDate?: string
+}

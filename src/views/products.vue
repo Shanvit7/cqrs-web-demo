@@ -1,17 +1,38 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ShoppingCartIcon, PlusIcon, MinusIcon, Trash2Icon } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { ShoppingCartIcon, PlusIcon, MinusIcon, Trash2Icon, Activity, Package, X } from 'lucide-vue-next'
 import { useProducts } from '@/composables/use-product'
 import { useCartStore } from '@/stores/cart.store'
+import { useListOrders, useUpdateOrderStatus } from '@/composables/use-order'
+import { useQueryClient } from '@tanstack/vue-query'
 import Button from '@/components/ui/button.vue'
+import AlertDialog from '@/components/ui/alert-dialog.vue'
 import CartDrawer from '@/components/cart-drawer.vue'
 import ProductCardSkeleton from '@/components/product-card-skeleton.vue'
-import type { Product } from '@/types/schema'
+import type { Product, OrderStatus, ListOrdersResponse } from '@/types/schema'
 
+const router = useRouter()
+const queryClient = useQueryClient()
 const cartStore = useCartStore()
 const page = ref(1)
 const limit = ref(30)
 const isCartDrawerOpen = ref(false)
+const showMyOrders = ref(false)
+const updateOrderStatusMutation = useUpdateOrderStatus()
+
+// Dialog states
+const cancelDialogOpen = ref(false)
+const cancelDialogLoading = ref(false)
+const selectedOrderId = ref<string | null>(null)
+const successDialogOpen = ref(false)
+const successMessage = ref('')
+
+// Fetch user's orders
+const { data: ordersData, isLoading: isLoadingOrders } = useListOrders({
+  customerId: cartStore.customerId,
+  limit: 20,
+})
 
 const { data: productsData, isLoading, isError } = useProducts({
   limit: limit.value,
@@ -51,6 +72,79 @@ const isProductInCart = (productId: number) => {
 const handleCartClick = () => {
   isCartDrawerOpen.value = true
 }
+
+const handleViewEvents = () => {
+  const route = router.resolve('/admin')
+  window.open(route.href, '_blank')
+}
+
+const orders = computed(() => {
+  if (!ordersData.value) return []
+  const data = ordersData.value as ListOrdersResponse
+  return data.orders || []
+})
+
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price)
+}
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+const getStatusColor = (status: OrderStatus) => {
+  const colors: Record<OrderStatus, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    processing: 'bg-blue-100 text-blue-800',
+    shipped: 'bg-purple-100 text-purple-800',
+    delivered: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+  }
+  return colors[status] || 'bg-gray-100 text-gray-800'
+}
+
+const canCancelOrder = (status: OrderStatus) => {
+  return status !== 'cancelled' && status !== 'delivered'
+}
+
+const openCancelDialog = (orderId: string) => {
+  selectedOrderId.value = orderId
+  cancelDialogOpen.value = true
+}
+
+const handleCancelOrder = async () => {
+  if (!selectedOrderId.value) return
+  
+  cancelDialogLoading.value = true
+  try {
+    await updateOrderStatusMutation.mutateAsync({ orderId: selectedOrderId.value, status: 'cancelled' })
+    cancelDialogOpen.value = false
+    successMessage.value = 'Order cancelled successfully!'
+    successDialogOpen.value = true
+    // Refresh orders list
+    queryClient.invalidateQueries({ queryKey: ['orders'] })
+    // Refresh events in admin panel if open
+    queryClient.invalidateQueries({ queryKey: ['events'] })
+  } catch (error) {
+    console.error('Failed to cancel order:', error)
+    cancelDialogOpen.value = false
+    successMessage.value = error instanceof Error ? error.message : 'Failed to cancel order. Please try again.'
+    successDialogOpen.value = true
+  } finally {
+    cancelDialogLoading.value = false
+    selectedOrderId.value = null
+  }
+}
 </script>
 
 <template>
@@ -58,13 +152,128 @@ const handleCartClick = () => {
     <div class="mx-auto max-w-7xl px-6 py-12 md:px-8 md:py-16">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="mb-4 text-4xl font-light text-black tracking-tight md:text-5xl">
-          Products
-        </h1>
-        <p class="text-lg text-gray-700">
-          Explore our product catalog powered by DummyJSON. Add items to your cart to create an order.
-        </p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="mb-4 text-4xl font-light text-black tracking-tight md:text-5xl">
+              Products
+            </h1>
+            <p class="text-lg text-gray-700">
+              Explore our product catalog powered by DummyJSON. Add items to your cart to create an order.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <Button
+              variant="outline"
+              @click="showMyOrders = !showMyOrders"
+              class="hidden sm:flex"
+            >
+              <Package class="mr-2 h-4 w-4" />
+              My Orders ({{ orders.length }})
+            </Button>
+            <Button
+              variant="outline"
+              @click="handleViewEvents"
+              class="hidden sm:flex"
+            >
+              <Activity class="mr-2 h-4 w-4" />
+              View Events
+            </Button>
+          </div>
+        </div>
       </div>
+
+      <!-- My Orders Section -->
+      <Transition name="slide">
+        <div v-if="showMyOrders" class="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-2xl font-semibold text-gray-900">My Orders</h2>
+            <Button variant="ghost" size="sm" @click="showMyOrders = false">
+              <X class="size-4" />
+            </Button>
+          </div>
+
+          <div v-if="isLoadingOrders" class="py-8 text-center">
+            <p class="text-gray-500">Loading orders...</p>
+          </div>
+
+          <div v-else-if="orders.length === 0" class="py-8 text-center">
+            <Package class="mx-auto size-12 text-gray-300 mb-4" />
+            <p class="text-gray-500">You haven't placed any orders yet.</p>
+            <p class="mt-2 text-sm text-gray-400">Add items to your cart and checkout to create an order!</p>
+          </div>
+
+          <div v-else class="space-y-4">
+            <div
+              v-for="order in orders"
+              :key="order.id"
+              class="rounded-lg border border-gray-200 p-4 transition-shadow hover:shadow-md"
+            >
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="flex-1">
+                  <div class="mb-2 flex items-center gap-3">
+                    <h3 class="font-semibold text-gray-900">
+                      Order #<span class="font-mono text-blue-600">{{ order.id.slice(0, 8) }}...</span>
+                    </h3>
+                    <span
+                      :class="[
+                        'inline-flex capitalize items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                        getStatusColor(order.status)
+                      ]"
+                    >
+                      {{ order.status }}
+                    </span>
+                  </div>
+                  
+                  <div class="space-y-1 text-sm text-gray-600">
+                    <p>
+                      <span class="font-medium">Items:</span> {{ order.items.length }} item{{ order.items.length !== 1 ? 's' : '' }}
+                    </p>
+                    <p>
+                      <span class="font-medium">Total:</span> {{ formatPrice(order.totalAmount) }}
+                    </p>
+                    <p>
+                      <span class="font-medium">Placed:</span> {{ formatDate(order.createdAt) }}
+                    </p>
+                    <p v-if="order.updatedAt !== order.createdAt">
+                      <span class="font-medium">Updated:</span> {{ formatDate(order.updatedAt) }}
+                    </p>
+                  </div>
+
+                  <!-- Order Items -->
+                  <div class="mt-3 space-y-1">
+                    <p class="text-xs font-medium text-gray-700">Items:</p>
+                    <div class="space-y-1">
+                      <div
+                        v-for="(item, idx) in order.items"
+                        :key="idx"
+                        class="text-xs text-gray-600"
+                      >
+                        • {{ item.productId }} - Qty: {{ item.quantity }} × {{ formatPrice(item.price) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:items-end">
+                  <Button
+                    v-if="canCancelOrder(order.status)"
+                    variant="destructive"
+                    size="sm"
+                    @click="openCancelDialog(order.id)"
+                    :disabled="updateOrderStatusMutation.isPending.value"
+                  >
+                    <X class="mr-2 h-4 w-4" />
+                    Cancel Order
+                  </Button>
+                  <p v-else class="text-xs text-gray-400">
+                    {{ order.status === 'delivered' ? 'Order delivered' : 'Order cancelled' }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
 
       <!-- Loading State with Skeleton -->
       <div v-if="isLoading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -189,6 +398,27 @@ const handleCartClick = () => {
 
     <!-- Cart Drawer -->
     <CartDrawer v-model:open="isCartDrawerOpen" />
+
+    <!-- Cancel Order Dialog -->
+    <AlertDialog
+      v-model:open="cancelDialogOpen"
+      :type="cancelDialogLoading ? 'loading' : 'warning'"
+      title="Cancel Order"
+      description="Are you sure you want to cancel this order? This action cannot be undone."
+      confirm-text="Yes, Cancel Order"
+      cancel-text="Keep Order"
+      :on-confirm="handleCancelOrder"
+    />
+
+    <!-- Success/Error Dialog -->
+    <AlertDialog
+      v-model:open="successDialogOpen"
+      :type="successMessage.includes('successfully') ? 'success' : 'error'"
+      :title="successMessage.includes('successfully') ? 'Success' : 'Error'"
+      :description="successMessage"
+      confirm-text="OK"
+      :show-cancel="false"
+    />
   </div>
 </template>
 
@@ -207,5 +437,21 @@ const handleCartClick = () => {
 .fab-leave-to {
   opacity: 0;
   transform: translateY(20px) scale(0.9);
+}
+
+/* Slide Animation */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

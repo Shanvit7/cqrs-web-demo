@@ -7,6 +7,11 @@ const router = useRouter()
 const handleGetStarted = () => {
   router.push('/products')
 }
+
+const handleViewEvents = () => {
+  const route = router.resolve('/admin')
+  window.open(route.href, '_blank')
+}
 </script>
 
 <template>
@@ -20,9 +25,18 @@ const handleGetStarted = () => {
         <p class="mx-auto mb-8 max-w-3xl text-lg leading-relaxed text-gray-700">
           A demonstration of a CQRS (Command Query Responsibility Segregation) Order Management System built with Bun, Hono, PostgreSQL, and Redis. Explore products, add them to your cart, and experience CQRS + Event Sourcing architecture in action.
         </p>
-        <Button class="px-8 py-3 text-base md:text-lg" @click="handleGetStarted">
-          Get Started
-        </Button>
+        <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
+          <Button class="px-8 py-3 text-base md:text-lg" @click="handleGetStarted">
+            Get Started
+          </Button>
+          <Button 
+            variant="outline" 
+            class="px-8 py-3 text-base md:text-lg" 
+            @click="handleViewEvents"
+          >
+            View Events Dashboard
+          </Button>
+        </div>
       </div>
 
       <!-- Content Sections -->

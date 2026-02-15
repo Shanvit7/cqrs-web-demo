@@ -5,6 +5,7 @@ import DefaultLayout from '@/layouts/default.vue';
 // PAGES
 import Landing from '@/views/landing.vue';
 import Products from '@/views/products.vue';
+import Admin from '@/views/admin.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -21,6 +22,11 @@ const routes: Array<RouteRecordRaw> = [
         path: 'products',
         name: 'Products',
         component: Products,
+      },
+      {
+        path: 'admin',
+        name: 'Admin',
+        component: Admin,
       },
     ],
   },
