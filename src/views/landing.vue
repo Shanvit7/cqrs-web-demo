@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { Github, ExternalLink } from 'lucide-vue-next'
 import Button from '@/components/ui/button.vue'
 
 const router = useRouter()
@@ -115,6 +116,44 @@ const handleViewEvents = () => {
           <p class="mt-4 text-base leading-relaxed text-gray-700">
             The backend demonstrates CQRS patterns: commands generate events stored in PostgreSQL, while queries read from optimized Redis read models updated by projections.
           </p>
+        </section>
+
+        <!-- Repository Links -->
+        <section>
+          <h2 class="mb-4 text-2xl font-semibold text-black md:text-3xl">
+            Source Code
+          </h2>
+          <p class="mb-4 text-base leading-relaxed text-gray-700">
+            This demo consists of two repositories - a backend API and a frontend application:
+          </p>
+          <div class="space-y-3">
+            <a
+              href="https://github.com/Shanvit7/cqrs-server-demo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:bg-blue-50 hover:shadow-md"
+            >
+              <Github class="h-5 w-5 flex-shrink-0 text-gray-700" />
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">Backend Repository</div>
+                <div class="text-sm text-gray-600">cqrs-server-demo</div>
+              </div>
+              <ExternalLink class="h-4 w-4 flex-shrink-0 text-gray-400" />
+            </a>
+            <a
+              href="https://github.com/Shanvit7/cqrs-web-demo"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-blue-300 hover:bg-blue-50 hover:shadow-md"
+            >
+              <Github class="h-5 w-5 flex-shrink-0 text-gray-700" />
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900">Frontend Repository</div>
+                <div class="text-sm text-gray-600">cqrs-web-demo</div>
+              </div>
+              <ExternalLink class="h-4 w-4 flex-shrink-0 text-gray-400" />
+            </a>
+          </div>
         </section>
       </div>
     </div>

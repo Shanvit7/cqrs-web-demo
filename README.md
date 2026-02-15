@@ -2,6 +2,18 @@
 
 A Vue 3 frontend application for the **CQRS Order Management System (OMS)** demo. This frontend demonstrates how to interact with a CQRS + Event Sourcing backend architecture.
 
+## Backend Repository
+
+This frontend consumes the **CQRS OMS Backend** API:
+
+🔗 **[cqrs-server-demo](https://github.com/Shanvit7/cqrs-server-demo)** - Backend built with Bun, Hono, and Zod, implementing CQRS and Event Sourcing patterns.
+
+The backend provides:
+- PostgreSQL event store (write side)
+- Redis read models (read side)
+- RESTful API endpoints for orders, products, and events
+- Interactive Swagger documentation at `/docs`
+
 ## Overview
 
 This is the frontend companion to the CQRS OMS backend demo. It provides a user interface to:
@@ -16,12 +28,14 @@ This is the frontend companion to the CQRS OMS backend demo. It provides a user 
 
 ## Architecture
 
-The frontend communicates with the CQRS OMS backend which implements:
+The frontend communicates with the [CQRS OMS Backend](https://github.com/Shanvit7/cqrs-server-demo) which implements:
 
 - **Write Side (PostgreSQL)**: Event store - append-only log of all domain events
 - **Read Side (Redis)**: Optimized read models - fast, in-memory queries
 - **Event Bus**: Publishes events to projections that update read models
 - **Domain Layer**: Order aggregate with business logic and event generation
+
+For detailed backend architecture and setup instructions, see the [backend repository](https://github.com/Shanvit7/cqrs-server-demo).
 
 ### Frontend Structure
 
@@ -88,7 +102,9 @@ src/
 
 - Node.js 18+ or Bun
 - pnpm (recommended) or npm
-- CQRS OMS backend running (default: `http://localhost:3000`)
+- **CQRS OMS Backend** running (default: `http://localhost:3000`)
+  - See [backend repository](https://github.com/Shanvit7/cqrs-server-demo) for setup instructions
+  - Requires PostgreSQL and Redis to be running
 
 ## Installation
 
